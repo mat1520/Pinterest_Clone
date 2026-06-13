@@ -44,12 +44,12 @@ function ShareIcon() {
   );
 }
 
-function PinCard({ pin, priority = false }) {
+function PinCard({ pin, priority = false, initialSaved = false }) {
   const navigate = useNavigate();
   const { authenticated } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(pin.likes_count || 0);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(initialSaved);
 
   function handleCardClick(e) {
     if (e.target.closest(".pin__accion")) return;

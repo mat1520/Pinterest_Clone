@@ -1,6 +1,4 @@
-import json
-from typing import List, Union
-from pydantic import field_validator
+from typing import List
 from pydantic_settings import BaseSettings
 
 
@@ -26,14 +24,7 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins_list(self) -> List[str]:
-        v = self.ALLOWED_ORIGINS.strip()
-        if v.startswith("["):
-            try:
-                origins = json.loads(v)
-            except json.JSONDecodeError:
-                origins = [v]
-        else:
-            origins = [o.strip() for o in v.split(",") if o.strip()]
+        origins = [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
         result = [o.rstrip("/") for o in origins]
         production = "https://pinterest-clone-pi-snowy.vercel.app"
         if production not in result:

@@ -112,7 +112,7 @@ def list_pins(
     return PinListResponse(items=items, total=total, offset=offset, limit=limit)
 
 
-@router.get("/saved")
+@router.get("/saved", response_model=PinListResponse)
 def get_saved_pins(
     current_user: User = Depends(get_current_user),
     save_service: SaveService = Depends(get_save_service),

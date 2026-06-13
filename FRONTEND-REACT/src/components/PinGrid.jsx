@@ -109,7 +109,7 @@ function PinGrid({ autorId = null, savedOnly = false }) {
     <>
       <section className="muro">
         {pins.map((pin, index) => (
-          <PinCard key={pin.id} pin={pin} priority={index < 4} />
+          <PinCard key={pin.id} pin={pin} priority={index < 4} initialSaved={savedOnly} />
         ))}
       </section>
       {loadingMore && <PinGridSkeleton />}
