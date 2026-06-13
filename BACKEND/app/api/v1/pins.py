@@ -1,13 +1,14 @@
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile, status, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, Query, Request, UploadFile, status
 
 from app.application.interfaces import IStorageService
-from app.application.services import PinService
-from app.core.dependencies import get_current_user, get_pin_repository, get_storage_service
+from app.application.services import LikeService, PinService, SaveService
+from app.core.dependencies import get_current_user, get_like_repository, get_pin_repository, get_save_repository, get_storage_service
+from app.core.limiter import limiter
 from app.domain.models import User
-from app.infrastructure.repositories import PinRepository
-from app.schemas.pin import PinRead
+from app.infrastructure.repositories import LikeRepository, PinRepository, SaveRepository
+from app.schemas.pin import PinListResponse, PinRead
 
 router = APIRouter(prefix="/pins", tags=["Pins"])
 
@@ -35,7 +36,19 @@ def get_pin_service(
     return PinService(pin_repo, storage)
 
 
-def _to_read(pin, service: PinService, autor_nombre: str) -> PinRead:
+def get_like_service(
+    like_repo: LikeRepository = Depends(get_like_repository),
+) -> LikeService:
+    return LikeService(like_repo)
+
+
+def get_save_service(
+    save_repo: SaveRepository = Depends(get_save_repository),
+) -> SaveService:
+    return SaveService(save_repo)
+
+
+def _to_read(pin, service: PinService, autor_nombre: str, likes_count: int = 0, saves_count: int = 0) -> PinRead:
     return PinRead(
         id=pin.id,
         titulo=pin.titulo,
@@ -45,6 +58,8 @@ def _to_read(pin, service: PinService, autor_nombre: str) -> PinRead:
         autor_id=pin.autor_id,
         creado_en=pin.creado_en,
         autor_nombre=autor_nombre,
+        likes_count=likes_count,
+        saves_count=saves_count,
     )
 
 
@@ -77,17 +92,24 @@ def validate_image_file(archivo: UploadFile) -> tuple[bytes, str]:
     return content, detected_mime
 
 
-@router.get("", response_model=List[PinRead])
+@router.get("", response_model=PinListResponse)
 def list_pins(
     q: Annotated[Optional[str], Query(max_length=100)] = None,
     autor_id: Annotated[Optional[int], Query(gt=0)] = None,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
     service: PinService = Depends(get_pin_service),
-) -> List[PinRead]:
-    pins = service.get_all(q=q, autor_id=autor_id)
-    return [
-        _to_read(pin, service, pin.autor.nombre if pin.autor else "")
+) -> PinListResponse:
+    pins, total = service.get_all(q=q, autor_id=autor_id, offset=offset, limit=limit)
+    items = [
+        _to_read(
+            pin, service, pin.autor.nombre if pin.autor else "",
+            likes_count=service.get_likes_count(pin.id),
+            saves_count=service.get_saves_count(pin.id),
+        )
         for pin in pins
     ]
+    return PinListResponse(items=items, total=total, offset=offset, limit=limit)
 
 
 @router.get("/{pin_id}", response_model=PinRead)
@@ -96,11 +118,17 @@ def get_pin(
     service: PinService = Depends(get_pin_service),
 ) -> PinRead:
     pin = service.get_by_id(pin_id)
-    return _to_read(pin, service, pin.autor.nombre if pin.autor else "")
+    return _to_read(
+        pin, service, pin.autor.nombre if pin.autor else "",
+        likes_count=service.get_likes_count(pin.id),
+        saves_count=service.get_saves_count(pin.id),
+    )
 
 
 @router.post("", response_model=PinRead, status_code=201)
+@limiter.limit("10/minute")
 def create_pin(
+    request: Request,
     titulo: Annotated[str, Form(min_length=1, max_length=100)],
     descripcion: Annotated[Optional[str], Form(max_length=500)] = None,
     categoria: Annotated[Optional[str], Form(max_length=50)] = None,
@@ -128,3 +156,55 @@ def delete_pin(
     service: PinService = Depends(get_pin_service),
 ) -> None:
     service.delete(pin_id=pin_id, user=current_user)
+
+
+@router.post("/{pin_id}/like")
+def toggle_like(
+    pin_id: Annotated[int, Path(gt=0)],
+    current_user: User = Depends(get_current_user),
+    service: LikeService = Depends(get_like_service),
+) -> dict:
+    liked, count = service.toggle(current_user.id, pin_id)
+    return {"liked": liked, "likes_count": count}
+
+
+@router.get("/{pin_id}/likes")
+def get_likes(
+    pin_id: Annotated[int, Path(gt=0)],
+    current_user: User = Depends(get_current_user),
+    like_service: LikeService = Depends(get_like_service),
+    pin_service: PinService = Depends(get_pin_service),
+) -> dict:
+    return {
+        "liked": like_service.is_liked(current_user.id, pin_id),
+        "likes_count": pin_service.get_likes_count(pin_id),
+    }
+
+
+@router.post("/{pin_id}/save")
+def toggle_save(
+    pin_id: Annotated[int, Path(gt=0)],
+    current_user: User = Depends(get_current_user),
+    service: SaveService = Depends(get_save_service),
+) -> dict:
+    saved = service.toggle(current_user.id, pin_id)
+    return {"saved": saved}
+
+
+@router.get("/saved")
+def get_saved_pins(
+    current_user: User = Depends(get_current_user),
+    save_service: SaveService = Depends(get_save_service),
+    pin_service: PinService = Depends(get_pin_service),
+) -> PinListResponse:
+    saved_ids = save_service.get_saved_pin_ids(current_user.id)
+    pins = []
+    for pid in saved_ids:
+        pin = pin_service.get_by_id(pid)
+        if pin:
+            pins.append(_to_read(
+                pin, pin_service, pin.autor.nombre if pin.autor else "",
+                likes_count=pin_service.get_likes_count(pin.id),
+                saves_count=pin_service.get_saves_count(pin.id),
+            ))
+    return PinListResponse(items=pins, total=len(pins), offset=0, limit=len(pins))

@@ -9,8 +9,8 @@ from app.core.exceptions import UnauthorizedException
 from app.core.security import decode_access_token
 from app.domain.models import User
 from app.infrastructure.database import get_session
-from app.infrastructure.repositories import CommentRepository, PinRepository, UserRepository
-from app.infrastructure.storage_service import AWSS3StorageService
+from app.infrastructure.repositories import CommentRepository, LikeRepository, PinRepository, SaveRepository, UserRepository
+from app.infrastructure.storage_service import get_storage_service as get_s3_service
 
 
 def get_user_repository(session: Session = Depends(get_session)) -> UserRepository:
@@ -25,8 +25,16 @@ def get_comment_repository(session: Session = Depends(get_session)) -> CommentRe
     return CommentRepository(session)
 
 
+def get_like_repository(session: Session = Depends(get_session)) -> LikeRepository:
+    return LikeRepository(session)
+
+
+def get_save_repository(session: Session = Depends(get_session)) -> SaveRepository:
+    return SaveRepository(session)
+
+
 def get_storage_service() -> IStorageService:
-    return AWSS3StorageService()
+    return get_s3_service()
 
 
 def get_current_user(

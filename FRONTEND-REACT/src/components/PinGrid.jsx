@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState, memo } from "react";
+import { useCallback, useEffect, useRef, useState, memo } from "react";
 import { useLocation } from "react-router-dom";
 import pinService from "../services/pinService";
 import PinCard from "./PinCard";
 
 const SKELETON_HEIGHTS = [220, 300, 180, 260, 340, 200, 280, 150, 310, 230, 190, 270];
-const INITIAL_BATCH = 12;
-const BATCH_SIZE = 12;
+const PAGE_SIZE = 20;
 
 function PinGridSkeleton() {
   return (
@@ -19,42 +18,70 @@ function PinGridSkeleton() {
   );
 }
 
-function PinGrid({ autorId = null }) {
+function PinGrid({ autorId = null, savedOnly = false }) {
   const [pins, setPins] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const sentinelRef = useRef(null);
+  const initialLoadDone = useRef(false);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const q = searchParams.get("q") || "";
 
-  useEffect(() => {
-    setLoading(true);
-    setVisibleCount(INITIAL_BATCH);
-    pinService
-      .getAll(q, autorId)
-      .then(setPins)
-      .catch(() => setError("No se pudieron cargar los pins."))
-      .finally(() => setLoading(false));
-  }, [q, autorId]);
+  const fetchPins = useCallback(async (currentOffset, append = false) => {
+    if (!append) setLoading(true);
+    else setLoadingMore(true);
+    try {
+      let result;
+      if (savedOnly) {
+        result = await pinService.getSaved();
+      } else {
+        result = await pinService.getAll(q, autorId, currentOffset, PAGE_SIZE);
+      }
+      if (append) {
+        setPins((prev) => [...prev, ...result.items]);
+      } else {
+        setPins(result.items);
+      }
+      setTotal(result.total);
+      setOffset(currentOffset + PAGE_SIZE);
+      setError(null);
+    } catch {
+      if (!append) setError("No se pudieron cargar los pins.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [q, autorId, savedOnly]);
 
   useEffect(() => {
-    if (!sentinelRef.current) return;
+    initialLoadDone.current = false;
+    setOffset(0);
+    setPins([]);
+    fetchPins(0, false);
+  }, [fetchPins]);
+
+  useEffect(() => {
+    if (loading || loadingMore || !sentinelRef.current) return;
+    const hasMore = offset < total;
+    if (!hasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + BATCH_SIZE);
+        if (entries[0].isIntersecting && !loadingMore && offset < total) {
+          fetchPins(offset, true);
         }
       },
-      { rootMargin: "300px" }
+      { rootMargin: "400px" }
     );
 
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
-  }, [pins]);
+  }, [loading, loadingMore, offset, total, fetchPins]);
 
   if (loading) return <PinGridSkeleton />;
 
@@ -71,22 +98,22 @@ function PinGrid({ autorId = null }) {
     return (
       <section className="estado-vacio">
         <p className="estado-vacio__titulo">Todavia no hay pins</p>
-        <p>Sube el primero para comenzar a explorar ideas.</p>
+        <p>{savedOnly ? "Guarda pins para verlos aqui." : "Sube el primero para comenzar a explorar ideas."}</p>
       </section>
     );
   }
 
-  const visiblePins = pins.slice(0, visibleCount);
-  const hasMore = visibleCount < pins.length;
+  const hasMore = offset < total;
 
   return (
     <>
       <section className="muro">
-        {visiblePins.map((pin, index) => (
+        {pins.map((pin, index) => (
           <PinCard key={pin.id} pin={pin} priority={index < 4} />
         ))}
       </section>
-      {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+      {loadingMore && <PinGridSkeleton />}
+      {hasMore && !loadingMore && <div ref={sentinelRef} style={{ height: 1 }} />}
     </>
   );
 }

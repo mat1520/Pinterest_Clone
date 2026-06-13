@@ -1,11 +1,6 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
-
-class PinCreate(BaseModel):
-    titulo: str = Field(..., min_length=1, max_length=100, strip_whitespace=True)
-    descripcion: Optional[str] = Field(None, max_length=500)
-    categoria: Optional[str] = Field(None, max_length=50)
+from typing import List, Optional
+from pydantic import BaseModel
 
 class PinRead(BaseModel):
     id: int
@@ -16,3 +11,11 @@ class PinRead(BaseModel):
     autor_id: int
     creado_en: datetime
     autor_nombre: str
+    likes_count: int = 0
+    saves_count: int = 0
+
+class PinListResponse(BaseModel):
+    items: List[PinRead]
+    total: int
+    offset: int
+    limit: int

@@ -6,13 +6,14 @@ import PinGrid from "../components/PinGrid";
 function ProfilePage() {
   const { user, authenticated } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [tab, setTab] = useState("creados");
 
   if (!authenticated) {
     return (
       <>
         <Header />
         <main className="acceso">
-          <p>Inicia sesión para ver tu perfil.</p>
+          <p>Inicia sesion para ver tu perfil.</p>
         </main>
       </>
     );
@@ -35,9 +36,26 @@ function ProfilePage() {
       <main>
         <section className="categorias">
           <h1 className="categorias__titulo">Perfil de {user.nombre}</h1>
-          <p style={{ color: "var(--color-muted)", marginBottom: "20px" }}>Estos son los pines que has creado.</p>
+          <nav className="perfil__tabs" aria-label="Secciones del perfil">
+            <button
+              className={`perfil__tab ${tab === "creados" ? "perfil__tab--activo" : ""}`}
+              onClick={() => setTab("creados")}
+            >
+              Mis pines
+            </button>
+            <button
+              className={`perfil__tab ${tab === "guardados" ? "perfil__tab--activo" : ""}`}
+              onClick={() => setTab("guardados")}
+            >
+              Guardados
+            </button>
+          </nav>
         </section>
-        <PinGrid key={refreshKey} autorId={user.id} />
+        {tab === "creados" ? (
+          <PinGrid key={`creados-${refreshKey}`} autorId={user.id} />
+        ) : (
+          <PinGrid key={`guardados-${refreshKey}`} savedOnly />
+        )}
       </main>
     </>
   );

@@ -1,11 +1,3 @@
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 400 800;
-  font-display: swap;
-  src: local("Inter");
-}
-
 *,
 *::before,
 *::after {
@@ -151,6 +143,11 @@ button {
 .boton--sm {
   padding: 8px 14px;
   font-size: 0.85rem;
+}
+
+.boton--peligro {
+  margin-top: 16px;
+  color: var(--color-accent);
 }
 
 /* Category chips */
@@ -403,6 +400,59 @@ button {
   border-radius: var(--radius-card);
 }
 
+.formulario__password-strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.formulario__password-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--color-chip-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.formulario__password-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.25s ease, background 0.25s ease;
+}
+
+.formulario__password-fill--weak { background: #e60023; }
+.formulario__password-fill--medium { background: #f90; }
+.formulario__password-fill--strong { background: #22b455; }
+
+.formulario__password-label {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.formulario__password-label--weak { color: #e60023; }
+.formulario__password-label--medium { color: #f90; }
+.formulario__password-label--strong { color: #22b455; }
+
+.formulario__password-rules {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+
+.formulario__password-rule {
+  font-size: 11px;
+  color: var(--color-muted);
+  transition: color 0.2s ease;
+}
+
+.formulario__password-rule--ok {
+  color: #22b455;
+}
+
 .formulario__input--textarea {
   min-height: 80px;
   resize: vertical;
@@ -513,6 +563,11 @@ button {
   box-shadow: 0 0 0 2px var(--color-accent);
 }
 
+.comentarios__vacio {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
 /* Skeletons / states */
 .skeleton {
   background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%);
@@ -609,4 +664,184 @@ button {
   line-height: 1.5;
   margin-top: 8px;
   margin-bottom: 16px;
+}
+
+/* Pin overlay & actions */
+.pin {
+  position: relative;
+}
+
+.pin__media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.pin__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.5) 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.pin:hover .pin__overlay,
+.pin:focus-within .pin__overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pin__overlay-acciones {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pin__overlay-derecha {
+  display: flex;
+  gap: 6px;
+}
+
+.pin__accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  color: #111;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  font-size: 14px;
+}
+
+.pin__accion:hover {
+  transform: scale(1.1);
+  background: #fff;
+}
+
+.pin__accion--like {
+  border-radius: 20px;
+  width: auto;
+  padding: 0 10px;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.pin__accion--activo {
+  background: #e60023;
+  color: #fff;
+}
+
+.pin__accion-count {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Profile tabs */
+.perfil__tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.perfil__tab {
+  border: 0;
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--color-chip-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.perfil__tab:hover {
+  filter: brightness(0.94);
+}
+
+.perfil__tab--activo {
+  background: #111;
+  color: #fff;
+}
+
+/* Pin detail actions */
+.publicacion__acciones {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.publicacion__accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.publicacion__accion:hover {
+  background: var(--color-chip-bg);
+}
+
+.publicacion__accion--activo {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: #fff0f2;
+}
+
+/* Comment header & delete */
+.comentario__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.comentario__eliminar {
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.comentario__eliminar:hover {
+  color: var(--color-accent);
+  background: #fff0f2;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .pin__accion--like {
+    font-size: 11px;
+    padding: 0 8px;
+  }
+  .pin__accion {
+    width: 30px;
+    height: 30px;
+  }
 }

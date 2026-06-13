@@ -1,6 +1,33 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../store/authStore";
+
+const PASSWORD_PATTERNS = [
+  { label: "8+ caracteres", test: (v) => v.length >= 8 },
+  { label: "Mayuscula", test: (v) => /[A-Z]/.test(v) },
+  { label: "Minuscula", test: (v) => /[a-z]/.test(v) },
+  { label: "Numero", test: (v) => /\d/.test(v) },
+  { label: "Caracter especial", test: (v) => /[!@#$%^&*()_+\-=\[\]{}|;':\",.\/<>?`~]/.test(v) },
+];
+
+function getPasswordStrength(clave) {
+  const passed = PASSWORD_PATTERNS.filter((p) => p.test(clave)).length;
+  if (passed <= 2) return { label: "Debil", level: "weak", pct: 33 };
+  if (passed <= 3) return { label: "Media", level: "medium", pct: 66 };
+  return { label: "Fuerte", level: "strong", pct: 100 };
+}
+
+function getMaxDate() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().split("T")[0];
+}
+
+function getMinDate() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 100);
+  return d.toISOString().split("T")[0];
+}
 
 function RegisterPage() {
   const { register } = useAuth();
@@ -14,12 +41,25 @@ function RegisterPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const strength = useMemo(() => getPasswordStrength(form.clave), [form.clave]);
+  const maxDate = useMemo(getMaxDate, []);
+  const minDate = useMemo(getMinDate, []);
+
+  const allValid = useMemo(
+    () => PASSWORD_PATTERNS.every((p) => p.test(form.clave)),
+    [form.clave]
+  );
+
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!allValid) {
+      setError("La contrasena no cumple con todos los requisitos de seguridad.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -32,7 +72,11 @@ function RegisterPage() {
       navigate("/login");
     } catch (err) {
       const detail = err.response?.data?.detail;
-      setError(detail || "Error al registrar. Intenta con otro correo.");
+      if (Array.isArray(detail)) {
+        setError(detail.map((d) => d.msg).join(". "));
+      } else {
+        setError(detail || "Error al registrar. Intenta con otro correo.");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,7 +130,33 @@ function RegisterPage() {
               onChange={handleChange}
               placeholder="Crea una contrasena"
               required
+              minLength={8}
             />
+            {form.clave.length > 0 && (
+              <div className="formulario__password-strength">
+                <div className="formulario__password-bar">
+                  <div
+                    className={`formulario__password-fill formulario__password-fill--${strength.level}`}
+                    style={{ width: `${strength.pct}%` }}
+                  />
+                </div>
+                <span className={`formulario__password-label formulario__password-label--${strength.level}`}>
+                  {strength.label}
+                </span>
+              </div>
+            )}
+            {form.clave.length > 0 && (
+              <ul className="formulario__password-rules">
+                {PASSWORD_PATTERNS.map((p) => (
+                  <li
+                    key={p.label}
+                    className={`formulario__password-rule ${p.test(form.clave) ? "formulario__password-rule--ok" : ""}`}
+                  >
+                    {p.test(form.clave) ? "✓" : "○"} {p.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </label>
           <label className="formulario__label">
             Fecha de nacimiento
@@ -97,6 +167,8 @@ function RegisterPage() {
               name="fecha_nacimiento"
               value={form.fecha_nacimiento}
               onChange={handleChange}
+              min={minDate}
+              max={maxDate}
               required
             />
           </label>

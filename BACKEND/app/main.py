@@ -47,6 +47,14 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class CSRFMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next) -> Response:
+        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                return Response(status_code=403, content="CSRF validation failed")
+        return await call_next(request)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_tables()
@@ -64,6 +72,7 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(CacheControlMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(SlowAPIMiddleware)
@@ -73,7 +82,7 @@ app.add_middleware(
     allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-Requested-With"],
 )
 
 app.include_router(v1_router, prefix=settings.API_V1_PREFIX)

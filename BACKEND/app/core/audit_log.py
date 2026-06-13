@@ -37,5 +37,3 @@ def log_unauthorized_delete_attempt(user_id: int, pin_id: int) -> None:
     _emit({"action": "unauthorized_delete_attempt", "user_id": user_id, "pin_id": pin_id})
 
 
-def log_upload_blocked(reason: str) -> None:
-    _emit({"action": "upload_blocked", "reason": reason})

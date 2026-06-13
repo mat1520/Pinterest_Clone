@@ -13,18 +13,27 @@ function PinDetailPage() {
   const [texto, setTexto] = useState("");
   const [loadingPin, setLoadingPin] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     Promise.all([pinService.getById(id), pinService.getComments(id)])
       .then(([pinData, commentsData]) => {
         setPin(pinData);
         setComments(commentsData);
+        setLikesCount(pinData.likes_count || 0);
       })
-      .catch(() => {
-        setPin(null);
-      })
+      .catch(() => setPin(null))
       .finally(() => setLoadingPin(false));
-  }, [id]);
+
+    if (authenticated) {
+      pinService.getLikes(id).then((r) => {
+        setLiked(r.liked);
+        setLikesCount(r.likes_count);
+      }).catch(() => {});
+    }
+  }, [id, authenticated]);
 
   async function handleComment(e) {
     e.preventDefault();
@@ -39,13 +48,49 @@ function PinDetailPage() {
     }
   }
 
-  async function handleDelete() {
-    if (!window.confirm("¿Seguro que deseas eliminar este pin? Esta acción no se puede deshacer.")) return;
+  async function handleDeletePin() {
+    if (!window.confirm("¿Seguro que deseas eliminar este pin? Esta accion no se puede deshacer.")) return;
     try {
       await pinService.delete(id);
       window.location.href = "/";
-    } catch (err) {
+    } catch {
       alert("Hubo un error al eliminar el pin.");
+    }
+  }
+
+  async function handleDeleteComment(commentId) {
+    if (!window.confirm("¿Eliminar este comentario?")) return;
+    try {
+      await pinService.deleteComment(id, commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch {
+      alert("Error al eliminar el comentario.");
+    }
+  }
+
+  async function handleLike() {
+    if (!authenticated) return navigate("/login");
+    try {
+      const res = await pinService.toggleLike(id);
+      setLiked(res.liked);
+      setLikesCount(res.likes_count);
+    } catch {}
+  }
+
+  async function handleSave() {
+    if (!authenticated) return navigate("/login");
+    try {
+      const res = await pinService.toggleSave(id);
+      setSaved(res.saved);
+    } catch {}
+  }
+
+  function handleShare() {
+    const url = `${window.location.origin}/pin/${id}`;
+    if (navigator.share) {
+      navigator.share({ title: pin?.titulo, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).catch(() => {});
     }
   }
 
@@ -74,9 +119,7 @@ function PinDetailPage() {
         <main>
           <section className="estado-vacio">
             <p className="estado-vacio__titulo">Pin no encontrado</p>
-            <Link className="formulario__enlace" to="/">
-              Volver al inicio
-            </Link>
+            <Link className="formulario__enlace" to="/">Volver al inicio</Link>
           </section>
         </main>
       </>
@@ -95,10 +138,29 @@ function PinDetailPage() {
                 src={pin.url_imagen}
                 alt={pin.titulo}
                 loading="eager"
-                decoding="sync"
+                decoding="async"
                 fetchpriority="high"
               />
             </figure>
+            <div className="publicacion__acciones">
+              <button
+                className={`publicacion__accion ${liked ? "publicacion__accion--activo" : ""}`}
+                onClick={handleLike}
+                aria-label={liked ? "Quitar like" : "Dar like"}
+              >
+                {liked ? "♥" : "♡"} {likesCount > 0 && likesCount}
+              </button>
+              <button
+                className={`publicacion__accion ${saved ? "publicacion__accion--activo" : ""}`}
+                onClick={handleSave}
+                aria-label={saved ? "Quitar guardado" : "Guardar"}
+              >
+                {saved ? "★" : "☆"} Guardar
+              </button>
+              <button className="publicacion__accion" onClick={handleShare} aria-label="Compartir">
+                ↗ Compartir
+              </button>
+            </div>
             <h1 className="publicacion__titulo">{pin.titulo}</h1>
             {pin.categoria && (
               <span className="publicacion__categoria-badge">{pin.categoria}</span>
@@ -109,9 +171,8 @@ function PinDetailPage() {
             <p className="publicacion__autor">@{pin.autor_nombre}</p>
             {(user?.id === pin.autor_id || user?.es_admin) && (
               <button
-                className="boton boton--sm boton--gris"
-                style={{ marginTop: "16px", color: "var(--color-accent)" }}
-                onClick={handleDelete}
+                className="boton boton--sm boton--gris boton--peligro"
+                onClick={handleDeletePin}
               >
                 Eliminar pin
               </button>
@@ -121,14 +182,25 @@ function PinDetailPage() {
           <aside className="comentarios">
             <h2 className="comentarios__titulo">Comentarios</h2>
             {comments.length === 0 ? (
-              <p style={{ color: "var(--color-muted)", fontSize: "14px" }}>
+              <p className="comentarios__vacio">
                 Todavia no hay comentarios. Se el primero.
               </p>
             ) : (
               <ul className="comentarios__lista">
                 {comments.map((c) => (
                   <li key={c.id} className="comentario">
-                    <p className="comentario__autor">@{c.autor_nombre}</p>
+                    <div className="comentario__cabecera">
+                      <p className="comentario__autor">@{c.autor_nombre}</p>
+                      {(user?.id === c.autor_id || user?.es_admin) && (
+                        <button
+                          className="comentario__eliminar"
+                          onClick={() => handleDeleteComment(c.id)}
+                          aria-label="Eliminar comentario"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
                     <p className="comentario__texto">{c.texto}</p>
                   </li>
                 ))}
@@ -137,15 +209,14 @@ function PinDetailPage() {
 
             {authenticated ? (
               <form className="comentarios__form" onSubmit={handleComment}>
-                <label className="comentarios__label" htmlFor="campo-comentario">
-                  Agrega un comentario
-                </label>
+                <label className="sr-only" htmlFor="campo-comentario">Agrega un comentario</label>
                 <textarea
                   id="campo-comentario"
                   className="comentarios__campo"
                   value={texto}
                   onChange={(e) => setTexto(e.target.value)}
                   placeholder="Escribe algo..."
+                  maxLength={500}
                 />
                 <button className="boton boton--sm" type="submit" disabled={submitting}>
                   {submitting ? "Enviando..." : "Comentar"}
@@ -153,10 +224,7 @@ function PinDetailPage() {
               </form>
             ) : (
               <p className="formulario__texto">
-                <Link className="formulario__enlace" to="/login">
-                  Inicia sesion
-                </Link>{" "}
-                para comentar.
+                <Link className="formulario__enlace" to="/login">Inicia sesion</Link> para comentar.
               </p>
             )}
           </aside>
