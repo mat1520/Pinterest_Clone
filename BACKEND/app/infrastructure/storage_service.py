@@ -1,3 +1,4 @@
+import re
 import uuid
 
 import boto3
@@ -6,6 +7,8 @@ from botocore.exceptions import ClientError
 
 from app.core.config import settings
 from app.core.exceptions import ConflictException
+
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
 
 
 class AWSS3StorageService:
@@ -20,13 +23,17 @@ class AWSS3StorageService:
         self.bucket = settings.AWS_S3_BUCKET
         self.expiration = settings.PRESIGNED_URL_EXPIRATION
 
-    def get_file_extension(self, file_name: str) -> str:
-        if "." in file_name:
-            return file_name.rsplit(".", 1)[-1].lower()
-        return "jpg"
+    def get_safe_extension(self, file_name: str) -> str:
+        if "." not in file_name:
+            return "jpg"
+        raw_extension = file_name.rsplit(".", 1)[-1].lower()
+        clean_extension = re.sub(r"[^a-z0-9]", "", raw_extension)
+        if clean_extension not in ALLOWED_EXTENSIONS:
+            return "jpg"
+        return clean_extension
 
-    def upload(self, file_name: str, file_content: bytes, content_type: str = "image/jpeg") -> str:
-        extension = self.get_file_extension(file_name)
+    def upload(self, file_name: str, file_content: bytes, content_type: str) -> str:
+        extension = self.get_safe_extension(file_name)
         object_key = f"pins/{uuid.uuid4()}.{extension}"
 
         try:

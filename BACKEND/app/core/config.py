@@ -1,3 +1,4 @@
+from typing import List
 from pydantic_settings import BaseSettings
 
 
@@ -15,6 +16,11 @@ class Settings(BaseSettings):
     AWS_REGION: str
     AWS_S3_BUCKET: str
     PRESIGNED_URL_EXPIRATION: int = 3600
+
+    ADMIN_EMAIL: str
+    ADMIN_PASSWORD: str
+
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
 
     class Config:
         env_file = ".env"

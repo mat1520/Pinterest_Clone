@@ -4,37 +4,33 @@ import authService from "../services/authService";
 const AuthContext = createContext(null);
 
 function AuthProvider({ children }) {
-  const [authenticated, setAuthenticated] = useState(
-    authService.isAuthenticated
-  );
+  const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-
-  const fetchUser = useCallback(async () => {
-    if (authenticated) {
-      try {
-        const userData = await authService.getCurrentUser();
-        setUser(userData);
-      } catch {
-        setAuthenticated(false);
-        setUser(null);
-        authService.logout();
-      }
-    } else {
-      setUser(null);
-    }
-  }, [authenticated]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    authService
+      .getCurrentUser()
+      .then((userData) => {
+        setUser(userData);
+        setAuthenticated(true);
+      })
+      .catch(() => {
+        setUser(null);
+        setAuthenticated(false);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const login = useCallback(async (correo, clave) => {
     await authService.login(correo, clave);
+    const userData = await authService.getCurrentUser();
+    setUser(userData);
     setAuthenticated(true);
   }, []);
 
-  const logout = useCallback(() => {
-    authService.logout();
+  const logout = useCallback(async () => {
+    await authService.logout();
     setAuthenticated(false);
     setUser(null);
   }, []);
@@ -47,8 +43,8 @@ function AuthProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ authenticated, user, login, logout, register }),
-    [authenticated, user, login, logout, register]
+    () => ({ authenticated, user, login, logout, register, loading }),
+    [authenticated, user, login, logout, register, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

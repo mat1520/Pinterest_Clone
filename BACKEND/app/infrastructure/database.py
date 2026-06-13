@@ -4,8 +4,8 @@ from typing import Generator
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.core.config import settings
-from app.domain.models import User
 from app.core.security import hash_password
+from app.domain.models import User
 
 engine = create_engine(
     settings.DATABASE_URL,
@@ -17,13 +17,13 @@ engine = create_engine(
 def create_tables() -> None:
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
-        statement = select(User).where(User.correo == "admin@pinterest.ec")
+        statement = select(User).where(User.correo == settings.ADMIN_EMAIL)
         admin = session.exec(statement).first()
         if not admin:
             admin_user = User(
                 nombre="Administrador",
-                correo="admin@pinterest.ec",
-                clave_hash=hash_password("admin202610"),
+                correo=settings.ADMIN_EMAIL,
+                clave_hash=hash_password(settings.ADMIN_PASSWORD),
                 fecha_nacimiento=date(2000, 1, 1),
                 es_admin=True,
             )

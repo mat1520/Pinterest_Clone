@@ -6,6 +6,12 @@ from app.application.interfaces import (
     IStorageService,
     IUserRepository,
 )
+from app.core.audit_log import (
+    log_delete_pin,
+    log_login_failure,
+    log_login_success,
+    log_unauthorized_delete_attempt,
+)
 from app.core.exceptions import ConflictException, NotFoundException, UnauthorizedException
 from app.core.security import create_access_token, hash_password, verify_password
 from app.domain.models import Comment, Pin, User
@@ -29,12 +35,14 @@ class AuthService:
         )
         return self._user_repo.create(user)
 
-    def login(self, data: UserLogin) -> Token:
+    def login(self, data: UserLogin) -> tuple[User, Token]:
         user = self._user_repo.get_by_email(data.correo)
         if not user or not verify_password(data.clave, user.clave_hash):
+            log_login_failure(data.correo)
             raise UnauthorizedException(detail="Credenciales invalidas")
+        log_login_success(user.id, user.correo)
         token = create_access_token(subject=user.id)
-        return Token(access_token=token)
+        return user, Token(access_token=token)
 
 
 class PinService:
@@ -74,7 +82,9 @@ class PinService:
     def delete(self, pin_id: int, user: User) -> None:
         pin = self.get_by_id(pin_id)
         if pin.autor_id != user.id and not user.es_admin:
+            log_unauthorized_delete_attempt(user.id, pin_id)
             raise UnauthorizedException(detail="No tienes permiso para eliminar este pin")
+        log_delete_pin(user.id, pin_id, user.es_admin)
         self._storage.delete(pin.url_imagen)
         self._pin_repo.delete(pin)
 

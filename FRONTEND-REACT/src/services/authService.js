@@ -1,4 +1,4 @@
-import api, { TOKEN_KEY } from "./api";
+import api from "./api";
 
 const authService = {
   async register(nombre, correo, clave, fecha_nacimiento) {
@@ -12,26 +12,25 @@ const authService = {
   },
 
   async login(correo, clave) {
-    const { data } = await api.post("/auth/login", { correo, clave });
-    localStorage.setItem(TOKEN_KEY, data.access_token);
-    return data;
+    await api.post("/auth/login", { correo, clave });
   },
 
-  logout() {
-    localStorage.removeItem(TOKEN_KEY);
-  },
-
-  getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-  },
-
-  isAuthenticated() {
-    return Boolean(localStorage.getItem(TOKEN_KEY));
+  async logout() {
+    await api.post("/auth/logout");
   },
 
   async getCurrentUser() {
     const { data } = await api.get("/users/me");
     return data;
+  },
+
+  async checkAuthenticated() {
+    try {
+      await api.get("/users/me");
+      return true;
+    } catch {
+      return false;
+    }
   },
 };
 

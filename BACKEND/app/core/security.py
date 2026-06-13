@@ -2,7 +2,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import InvalidTokenError
 
 from app.core.config import settings
 
@@ -19,9 +20,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     )
 
 
-def create_access_token(
-    subject: int, expires_delta: Optional[timedelta] = None
-) -> str:
+def create_access_token(subject: int, expires_delta: Optional[timedelta] = None) -> str:
     expire = datetime.now(timezone.utc) + (
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
@@ -31,12 +30,10 @@ def create_access_token(
 
 def decode_access_token(token: str) -> Optional[int]:
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         subject: Optional[str] = payload.get("sub")
         if subject is None:
             return None
         return int(subject)
-    except (JWTError, ValueError):
+    except (InvalidTokenError, ValueError):
         return None

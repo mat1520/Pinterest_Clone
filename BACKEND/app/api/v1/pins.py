@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
 
 from app.application.interfaces import IStorageService
 from app.application.services import PinService
@@ -10,6 +10,18 @@ from app.infrastructure.repositories import PinRepository
 from app.schemas.pin import PinRead
 
 router = APIRouter(prefix="/pins", tags=["Pins"])
+
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+
+MAGIC_BYTES = {
+    b"\xff\xd8\xff": "image/jpeg",
+    b"\x89PNG\r\n\x1a\n": "image/png",
+    b"GIF87a": "image/gif",
+    b"GIF89a": "image/gif",
+    b"RIFF": "image/webp",
+}
 
 
 def get_pin_service(
@@ -32,10 +44,43 @@ def _to_read(pin, service: PinService, autor_nombre: str) -> PinRead:
     )
 
 
+def validate_image_file(archivo: UploadFile) -> tuple[bytes, str]:
+    content = archivo.file.read()
+
+    if len(content) > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="La imagen no puede superar los 10 MB.",
+        )
+
+    file_name = archivo.filename or "upload.jpg"
+    extension = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+
+    if extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Extensión no permitida. Formatos aceptados: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+        )
+
+    detected_mime = None
+    for signature, mime in MAGIC_BYTES.items():
+        if content.startswith(signature):
+            detected_mime = mime
+            break
+
+    if detected_mime is None or detected_mime not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="El contenido del archivo no corresponde a una imagen válida.",
+        )
+
+    return content, detected_mime
+
+
 @router.get("", response_model=List[PinRead])
 def list_pins(
-    q: str = None,
-    autor_id: int = None,
+    q: Annotated[Optional[str], Query(max_length=100)] = None,
+    autor_id: Optional[int] = None,
     service: PinService = Depends(get_pin_service),
 ) -> List[PinRead]:
     pins = service.get_all(q=q, autor_id=autor_id)
@@ -62,18 +107,18 @@ def create_pin(
     current_user: User = Depends(get_current_user),
     service: PinService = Depends(get_pin_service),
 ) -> PinRead:
-    content = archivo.file.read()
-    content_type = archivo.content_type or "image/jpeg"
+    file_content, detected_mime = validate_image_file(archivo)
     pin = service.create(
         titulo=titulo,
         descripcion=descripcion,
         categoria=categoria,
         file_name=archivo.filename or "upload.jpg",
-        file_content=content,
-        content_type=content_type,
+        file_content=file_content,
+        content_type=detected_mime,
         autor_id=current_user.id,
     )
     return _to_read(pin, service, current_user.nombre)
+
 
 @router.delete("/{pin_id}", status_code=204)
 def delete_pin(
