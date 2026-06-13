@@ -158,7 +158,7 @@ function PinDetailPage() {
                 alt={pin.titulo}
                 loading="eager"
                 decoding="async"
-                fetchpriority="high"
+                fetchPriority="high"
               />
             </figure>
             <div className="publicacion__acciones">

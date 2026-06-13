@@ -7,11 +7,14 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.domain.models import User
 
+_url = settings.DATABASE_URL
+_connect_args = {"sslmode": "require"} if _url.startswith("postgresql") else {}
+
 engine = create_engine(
-    settings.DATABASE_URL,
+    _url,
     echo=False,
     pool_pre_ping=True,
-    connect_args={"sslmode": "require"},
+    connect_args=_connect_args,
 )
 
 
