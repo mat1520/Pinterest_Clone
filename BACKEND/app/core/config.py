@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str
     ADMIN_PASSWORD: str
 
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,https://pinterest-clone-pi-snowy.vercel.app"
 
     @property
     def allowed_origins_list(self) -> List[str]:
