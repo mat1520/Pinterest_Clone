@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from traceback import format_exception
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -71,6 +72,14 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    return Response(
+        status_code=500,
+        content="".join(format_exception(type(exc), exc, exc.__traceback__)),
+    )
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CSRFMiddleware)
 app.add_middleware(CacheControlMiddleware)
