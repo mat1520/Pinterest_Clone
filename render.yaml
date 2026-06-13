@@ -9,7 +9,7 @@ services:
     pythonVersion: "3.12.0"
     envVars:
       - key: DATABASE_URL
-        value: sqlite:///./pinterest.db
+        sync: false
       - key: SECRET_KEY
         sync: false
       - key: ALGORITHM

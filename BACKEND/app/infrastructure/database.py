@@ -10,7 +10,8 @@ from app.domain.models import User
 engine = create_engine(
     settings.DATABASE_URL,
     echo=False,
-    connect_args={"check_same_thread": False},
+    pool_pre_ping=True,
+    connect_args={"sslmode": "require"},
 )
 
 
