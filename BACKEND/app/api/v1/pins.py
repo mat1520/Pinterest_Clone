@@ -121,7 +121,7 @@ def get_saved_pins(
     saved_ids = save_service.get_saved_pin_ids(current_user.id)
     pins = []
     for pid in saved_ids:
-        pin = pin_service.get_by_id(pid)
+        pin = pin_service.find_by_id(pid)
         if pin:
             pins.append(_to_read(
                 pin, pin_service, pin.autor.nombre if pin.autor else "",
@@ -200,11 +200,22 @@ def get_likes(
     }
 
 
-@router.post("/{pin_id}/save")
-def toggle_save(
+@router.get("/{pin_id}/save")
+def get_save_status(
     pin_id: Annotated[int, Path(gt=0)],
     current_user: User = Depends(get_current_user),
     service: SaveService = Depends(get_save_service),
 ) -> dict:
-    saved = service.toggle(current_user.id, pin_id)
-    return {"saved": saved}
+    return {"saved": service.is_saved(current_user.id, pin_id)}
+
+
+@router.post("/{pin_id}/save")
+def toggle_save(
+    pin_id: Annotated[int, Path(gt=0)],
+    current_user: User = Depends(get_current_user),
+    save_service: SaveService = Depends(get_save_service),
+    pin_service: PinService = Depends(get_pin_service),
+) -> dict:
+    saved = save_service.toggle(current_user.id, pin_id)
+    saves_count = pin_service.get_saves_count(pin_id)
+    return {"saved": saved, "saves_count": saves_count}

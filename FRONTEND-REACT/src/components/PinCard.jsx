@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/authStore";
 import pinService from "../services/pinService";
@@ -50,6 +50,13 @@ function PinCard({ pin, priority = false, initialSaved = false }) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(pin.likes_count || 0);
   const [saved, setSaved] = useState(initialSaved);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    pinService.getLikes(pin.id)
+      .then((r) => { setLiked(r.liked); setLikesCount(r.likes_count); })
+      .catch(() => {});
+  }, [pin.id, authenticated]);
 
   function handleCardClick(e) {
     if (e.target.closest(".pin__accion")) return;

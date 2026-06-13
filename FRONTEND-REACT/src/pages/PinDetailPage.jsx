@@ -18,21 +18,40 @@ function PinDetailPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    Promise.all([pinService.getById(id), pinService.getComments(id)])
-      .then(([pinData, commentsData]) => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [pinData, commentsData] = await Promise.all([
+          pinService.getById(id),
+          pinService.getComments(id),
+        ]);
+        if (cancelled) return;
         setPin(pinData);
         setComments(commentsData);
         setLikesCount(pinData.likes_count || 0);
-      })
-      .catch(() => setPin(null))
-      .finally(() => setLoadingPin(false));
 
-    if (authenticated) {
-      pinService.getLikes(id).then((r) => {
-        setLiked(r.liked);
-        setLikesCount(r.likes_count);
-      }).catch(() => {});
+        if (authenticated) {
+          try {
+            const [likesData, saveData] = await Promise.all([
+              pinService.getLikes(id),
+              pinService.getSavedStatus(id),
+            ]);
+            if (cancelled) return;
+            setLiked(likesData.liked);
+            setLikesCount(likesData.likes_count);
+            setSaved(saveData.saved);
+          } catch {}
+        }
+      } catch {
+        if (!cancelled) setPin(null);
+      } finally {
+        if (!cancelled) setLoadingPin(false);
+      }
     }
+
+    load();
+    return () => { cancelled = true; };
   }, [id, authenticated]);
 
   async function handleComment(e) {
@@ -52,7 +71,7 @@ function PinDetailPage() {
     if (!window.confirm("¿Seguro que deseas eliminar este pin? Esta accion no se puede deshacer.")) return;
     try {
       await pinService.delete(id);
-      window.location.href = "/";
+      navigate("/");
     } catch {
       alert("Hubo un error al eliminar el pin.");
     }

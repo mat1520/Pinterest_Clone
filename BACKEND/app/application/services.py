@@ -75,6 +75,9 @@ class PinService:
             raise NotFoundException(detail="Pin no encontrado")
         return pin
 
+    def find_by_id(self, pin_id: int) -> Pin | None:
+        return self._pin_repo.get_by_id(pin_id)
+
     def get_all(self, q: str = None, autor_id: int = None, offset: int = 0, limit: int = 20) -> tuple[List[Pin], int]:
         return self._pin_repo.get_all(q=q, autor_id=autor_id, offset=offset, limit=limit)
 
@@ -140,6 +143,9 @@ class SaveService:
 
     def toggle(self, user_id: int, pin_id: int) -> bool:
         return self._save_repo.toggle(user_id, pin_id)
+
+    def is_saved(self, user_id: int, pin_id: int) -> bool:
+        return self._save_repo.is_saved(user_id, pin_id)
 
     def get_saved_pin_ids(self, user_id: int) -> List[int]:
         return self._save_repo.get_saved_pin_ids(user_id)

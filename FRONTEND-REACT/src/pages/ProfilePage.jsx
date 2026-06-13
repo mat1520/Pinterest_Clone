@@ -4,9 +4,20 @@ import Header from "../components/Header";
 import PinGrid from "../components/PinGrid";
 
 function ProfilePage() {
-  const { user, authenticated } = useAuth();
+  const { user, authenticated, loading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [tab, setTab] = useState("creados");
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="acceso">
+          <p>Cargando perfil...</p>
+        </main>
+      </>
+    );
+  }
 
   if (!authenticated) {
     return (
@@ -14,17 +25,6 @@ function ProfilePage() {
         <Header />
         <main className="acceso">
           <p>Inicia sesion para ver tu perfil.</p>
-        </main>
-      </>
-    );
-  }
-
-  if (!user) {
-    return (
-      <>
-        <Header />
-        <main className="acceso">
-          <p>Cargando perfil...</p>
         </main>
       </>
     );

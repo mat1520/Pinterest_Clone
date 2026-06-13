@@ -61,6 +61,11 @@ const pinService = {
     return data;
   },
 
+  async getSavedStatus(pinId) {
+    const { data } = await api.get(`/pins/${pinId}/save`);
+    return data;
+  },
+
   async getSaved() {
     const { data } = await api.get("/pins/saved");
     return data;

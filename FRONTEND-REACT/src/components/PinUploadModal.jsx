@@ -66,7 +66,6 @@ function PinUploadModal({ onClose, onCreated }) {
         descripcion.trim()
       );
       onCreated(pin);
-      onClose();
     } catch {
       setError("Error al subir el pin. Intenta de nuevo.");
     } finally {
