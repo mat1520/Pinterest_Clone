@@ -43,7 +43,7 @@ function PinDetailPage() {
     if (!window.confirm("¿Seguro que deseas eliminar este pin? Esta acción no se puede deshacer.")) return;
     try {
       await pinService.delete(id);
-      navigate("/");
+      window.location.href = "/";
     } catch (err) {
       alert("Hubo un error al eliminar el pin.");
     }

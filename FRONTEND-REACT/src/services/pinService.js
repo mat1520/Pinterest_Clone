@@ -5,7 +5,8 @@ const pinService = {
     const params = new URLSearchParams();
     if (query) params.append("q", query);
     if (autorId) params.append("autor_id", autorId);
-    
+    params.append("_t", Date.now());
+
     const { data } = await api.get(`/pins?${params.toString()}`);
     return data;
   },
