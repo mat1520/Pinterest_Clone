@@ -204,7 +204,8 @@ button {
   animation: entrada 0.35s ease both;
   cursor: pointer;
   position: relative;
-  contain: layout;
+  contain: layout style paint;
+  content-visibility: auto;
 }
 
 .pin:hover .pin__imagen {
@@ -736,6 +737,12 @@ button {
   gap: 4px;
   font-weight: 700;
   font-size: 13px;
+}
+
+.pin__accion--save {
+  border-radius: 20px;
+  width: auto;
+  padding: 0 10px;
 }
 
 .pin__accion--activo {

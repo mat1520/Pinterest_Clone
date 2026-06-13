@@ -41,7 +41,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
         if request.method == "GET" and response.status_code == 200:
             path = request.url.path
             if "/pins" in path and "comments" not in path and "likes" not in path and "saved" not in path:
-                response.headers["Cache-Control"] = "private, max-age=30, stale-while-revalidate=60"
+                response.headers["Cache-Control"] = "private, max-age=5"
             else:
                 response.headers["Cache-Control"] = "no-store"
         return response

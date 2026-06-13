@@ -1,4 +1,5 @@
 import re
+import time
 import uuid
 
 import boto3
@@ -12,6 +13,7 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
 
 
 _s3_instance: "AWSS3StorageService | None" = None
+_presigned_cache: dict[str, tuple[str, float]] = {}
 
 
 def get_storage_service() -> "AWSS3StorageService":
@@ -58,16 +60,24 @@ class AWSS3StorageService:
             raise StorageException(detail="El servicio de almacenamiento no está disponible.")
 
     def get_presigned_url(self, object_key: str) -> str:
+        now = time.time()
+        cached = _presigned_cache.get(object_key)
+        if cached and cached[1] > now:
+            return cached[0]
+
         try:
-            return self.client.generate_presigned_url(
+            url = self.client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": self.bucket, "Key": object_key},
                 ExpiresIn=self.expiration,
             )
+            _presigned_cache[object_key] = (url, now + self.expiration - 60)
+            return url
         except ClientError:
             raise StorageException(detail="El servicio de almacenamiento no está disponible.")
 
     def delete(self, object_key: str) -> None:
+        _presigned_cache.pop(object_key, None)
         try:
             self.client.delete_object(Bucket=self.bucket, Key=object_key)
         except ClientError:
