@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str
     ADMIN_PASSWORD: str
 
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,https://pinterest-clone-pi-snowy.vercel.app"
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     @property
     def allowed_origins_list(self) -> List[str]:
@@ -34,7 +34,11 @@ class Settings(BaseSettings):
                 origins = [v]
         else:
             origins = [o.strip() for o in v.split(",") if o.strip()]
-        return [o.rstrip("/") for o in origins]
+        result = [o.rstrip("/") for o in origins]
+        production = "https://pinterest-clone-pi-snowy.vercel.app"
+        if production not in result:
+            result.append(production)
+        return result
 
     class Config:
         env_file = ".env"
