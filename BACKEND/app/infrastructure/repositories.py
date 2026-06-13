@@ -144,8 +144,6 @@ class SaveRepository(ISaveRepository):
         ).first() is not None
 
     def get_saved_pin_ids(self, user_id: int) -> List[int]:
-        return [
-            row[0] for row in self._session.exec(
-                select(Save.pin_id).where(Save.user_id == user_id).order_by(Save.creado_en.desc())
-            ).all()
-        ]
+        return list(self._session.exec(
+            select(Save.pin_id).where(Save.user_id == user_id).order_by(Save.creado_en.desc())
+        ).all())

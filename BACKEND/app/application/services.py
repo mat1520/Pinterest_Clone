@@ -130,6 +130,9 @@ class LikeService:
     def toggle(self, user_id: int, pin_id: int) -> tuple[bool, int]:
         return self._like_repo.toggle(user_id, pin_id)
 
+    def is_liked(self, user_id: int, pin_id: int) -> bool:
+        return self._like_repo.is_liked(user_id, pin_id)
+
 
 class SaveService:
     def __init__(self, save_repo: ISaveRepository) -> None:
