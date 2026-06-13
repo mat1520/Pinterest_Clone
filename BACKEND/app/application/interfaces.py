@@ -25,6 +25,9 @@ class IPinRepository(ABC):
     @abstractmethod
     def get_all(self, q: Optional[str] = None, autor_id: Optional[int] = None) -> List[Pin]: ...
 
+    @abstractmethod
+    def delete(self, pin: Pin) -> None: ...
+
 
 class ICommentRepository(ABC):
     @abstractmethod

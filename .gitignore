@@ -6,3 +6,11 @@ __pycache__/
 venv/
 *.sqlite3
 *.db
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+audit_log.jsonl

@@ -12,7 +12,7 @@ from app.core.audit_log import (
     log_login_success,
     log_unauthorized_delete_attempt,
 )
-from app.core.exceptions import ConflictException, NotFoundException, UnauthorizedException
+from app.core.exceptions import ConflictException, ForbiddenException, NotFoundException, UnauthorizedException
 from app.core.security import create_access_token, hash_password, verify_password
 from app.domain.models import Comment, Pin, User
 from app.schemas.token import Token
@@ -83,7 +83,7 @@ class PinService:
         pin = self.get_by_id(pin_id)
         if pin.autor_id != user.id and not user.es_admin:
             log_unauthorized_delete_attempt(user.id, pin_id)
-            raise UnauthorizedException(detail="No tienes permiso para eliminar este pin")
+            raise ForbiddenException(detail="No tienes permiso para eliminar este pin")
         log_delete_pin(user.id, pin_id, user.es_admin)
         self._storage.delete(pin.url_imagen)
         self._pin_repo.delete(pin)

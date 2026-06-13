@@ -1,5 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import pinService from "../services/pinService";
+
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
 function PinUploadModal({ onClose, onCreated }) {
   const [titulo, setTitulo] = useState("");
@@ -11,8 +15,24 @@ function PinUploadModal({ onClose, onCreated }) {
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
 
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
   function handleFileChange(file) {
     if (!file) return;
+    if (!ALLOWED_TYPES.has(file.type)) {
+      setError("Solo se permiten imágenes JPEG, PNG, GIF o WebP.");
+      return;
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      setError("La imagen no puede superar los 10 MB.");
+      return;
+    }
+    setError(null);
+    if (preview) URL.revokeObjectURL(preview);
     setArchivo(file);
     setPreview(URL.createObjectURL(file));
   }
@@ -20,6 +40,10 @@ function PinUploadModal({ onClose, onCreated }) {
   function handleDrop(e) {
     e.preventDefault();
     handleFileChange(e.dataTransfer.files[0]);
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === e.currentTarget) onClose();
   }
 
   async function handleSubmit(e) {
@@ -50,9 +74,9 @@ function PinUploadModal({ onClose, onCreated }) {
     }
   }
 
-  return (
-    <dialog className="modal" open>
-      <div className="modal__contenedor">
+  const modal = (
+    <div className="modal-overlay" onClick={handleOverlayClick}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal__titulo">Crear pin</h2>
         <form className="modal__formulario" onSubmit={handleSubmit}>
           <div
@@ -62,17 +86,24 @@ function PinUploadModal({ onClose, onCreated }) {
             onDragOver={(e) => e.preventDefault()}
             role="button"
             tabIndex="0"
+            onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
           >
             {preview ? (
-              <img className="dropzone__preview" src={preview} alt="Vista previa" />
+              <img
+                className="dropzone__preview"
+                src={preview}
+                alt="Vista previa"
+              />
             ) : (
-              <p className="dropzone__texto">Arrastra una imagen aqui o haz clic para seleccionar</p>
+              <p className="dropzone__texto">
+                Arrastra una imagen aqui o haz clic para seleccionar
+              </p>
             )}
             <input
               ref={inputRef}
-              className="dropzone__input"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              style={{ display: "none" }}
               onChange={(e) => handleFileChange(e.target.files[0])}
             />
           </div>
@@ -85,8 +116,6 @@ function PinUploadModal({ onClose, onCreated }) {
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Escribe un titulo"
-              required
-              minLength="1"
               maxLength="100"
             />
           </label>
@@ -135,18 +164,16 @@ function PinUploadModal({ onClose, onCreated }) {
             >
               Cancelar
             </button>
-            <button
-              type="submit"
-              className="boton boton--sm"
-              disabled={uploading}
-            >
+            <button type="submit" className="boton boton--sm" disabled={uploading}>
               {uploading ? "Subiendo..." : "Publicar"}
             </button>
           </div>
         </form>
       </div>
-    </dialog>
+    </div>
   );
+
+  return createPortal(modal, document.body);
 }
 
 export default PinUploadModal;

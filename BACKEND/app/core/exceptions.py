@@ -12,7 +12,7 @@ class BadRequestException(HTTPException):
 
 
 class UnauthorizedException(HTTPException):
-    def __init__(self, detail: str = "No autorizado") -> None:
+    def __init__(self, detail: str = "No autenticado") -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
@@ -20,6 +20,16 @@ class UnauthorizedException(HTTPException):
         )
 
 
+class ForbiddenException(HTTPException):
+    def __init__(self, detail: str = "No autorizado") -> None:
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+
 class ConflictException(HTTPException):
     def __init__(self, detail: str = "Conflicto") -> None:
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
+class StorageException(HTTPException):
+    def __init__(self, detail: str = "Error en el servicio de almacenamiento") -> None:
+        super().__init__(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail)

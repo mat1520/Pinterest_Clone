@@ -15,13 +15,17 @@ ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
-MAGIC_BYTES = {
-    b"\xff\xd8\xff": "image/jpeg",
-    b"\x89PNG\r\n\x1a\n": "image/png",
-    b"GIF87a": "image/gif",
-    b"GIF89a": "image/gif",
-    b"RIFF": "image/webp",
-}
+
+def _detect_mime(content: bytes) -> Optional[str]:
+    if content[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if content[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if content[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    if content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return "image/webp"
+    return None
 
 
 def get_pin_service(
@@ -45,7 +49,7 @@ def _to_read(pin, service: PinService, autor_nombre: str) -> PinRead:
 
 
 def validate_image_file(archivo: UploadFile) -> tuple[bytes, str]:
-    content = archivo.file.read()
+    content = archivo.file.read(MAX_FILE_SIZE_BYTES + 1)
 
     if len(content) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(
@@ -62,11 +66,7 @@ def validate_image_file(archivo: UploadFile) -> tuple[bytes, str]:
             detail=f"Extensión no permitida. Formatos aceptados: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
         )
 
-    detected_mime = None
-    for signature, mime in MAGIC_BYTES.items():
-        if content.startswith(signature):
-            detected_mime = mime
-            break
+    detected_mime = _detect_mime(content)
 
     if detected_mime is None or detected_mime not in ALLOWED_MIME_TYPES:
         raise HTTPException(
@@ -80,7 +80,7 @@ def validate_image_file(archivo: UploadFile) -> tuple[bytes, str]:
 @router.get("", response_model=List[PinRead])
 def list_pins(
     q: Annotated[Optional[str], Query(max_length=100)] = None,
-    autor_id: Optional[int] = None,
+    autor_id: Annotated[Optional[int], Query(gt=0)] = None,
     service: PinService = Depends(get_pin_service),
 ) -> List[PinRead]:
     pins = service.get_all(q=q, autor_id=autor_id)
@@ -92,7 +92,8 @@ def list_pins(
 
 @router.get("/{pin_id}", response_model=PinRead)
 def get_pin(
-    pin_id: int, service: PinService = Depends(get_pin_service)
+    pin_id: Annotated[int, Query(gt=0)],
+    service: PinService = Depends(get_pin_service),
 ) -> PinRead:
     pin = service.get_by_id(pin_id)
     return _to_read(pin, service, pin.autor.nombre if pin.autor else "")
@@ -100,9 +101,9 @@ def get_pin(
 
 @router.post("", response_model=PinRead, status_code=201)
 def create_pin(
-    titulo: str = Form(...),
-    descripcion: Optional[str] = Form(None),
-    categoria: Optional[str] = Form(None),
+    titulo: Annotated[str, Form(min_length=1, max_length=100)],
+    descripcion: Annotated[Optional[str], Form(max_length=500)] = None,
+    categoria: Annotated[Optional[str], Form(max_length=50)] = None,
     archivo: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     service: PinService = Depends(get_pin_service),

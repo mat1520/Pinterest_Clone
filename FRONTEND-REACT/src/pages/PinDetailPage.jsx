@@ -51,25 +51,35 @@ function PinDetailPage() {
 
   if (loadingPin) {
     return (
-      <section className="detalle">
-        <article className="publicacion">
-          <span className="skeleton" style={{ display: "block", height: "520px", borderRadius: "8px" }} />
-        </article>
-        <aside className="comentarios">
-          <span className="skeleton" style={{ display: "block", height: "200px", borderRadius: "8px" }} />
-        </aside>
-      </section>
+      <>
+        <Header />
+        <main>
+          <section className="detalle">
+            <article className="publicacion">
+              <span className="skeleton" style={{ display: "block", height: "520px", borderRadius: "8px" }} />
+            </article>
+            <aside className="comentarios">
+              <span className="skeleton" style={{ display: "block", height: "200px", borderRadius: "8px" }} />
+            </aside>
+          </section>
+        </main>
+      </>
     );
   }
 
   if (!pin) {
     return (
-      <section className="estado-vacio">
-        <p className="estado-vacio__titulo">Pin no encontrado</p>
-        <Link className="formulario__enlace" to="/">
-          Volver al inicio
-        </Link>
-      </section>
+      <>
+        <Header />
+        <main>
+          <section className="estado-vacio">
+            <p className="estado-vacio__titulo">Pin no encontrado</p>
+            <Link className="formulario__enlace" to="/">
+              Volver al inicio
+            </Link>
+          </section>
+        </main>
+      </>
     );
   }
 
@@ -84,6 +94,9 @@ function PinDetailPage() {
                 className="publicacion__imagen"
                 src={pin.url_imagen}
                 alt={pin.titulo}
+                loading="eager"
+                decoding="sync"
+                fetchpriority="high"
               />
             </figure>
             <h1 className="publicacion__titulo">{pin.titulo}</h1>

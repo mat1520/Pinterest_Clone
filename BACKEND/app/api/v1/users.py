@@ -14,5 +14,6 @@ def get_me(current_user: User = Depends(get_current_user)) -> UserRead:
         nombre=current_user.nombre,
         correo=current_user.correo,
         fecha_nacimiento=current_user.fecha_nacimiento,
+        es_admin=current_user.es_admin,
         creado_en=current_user.creado_en,
     )

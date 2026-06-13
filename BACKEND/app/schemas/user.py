@@ -5,13 +5,13 @@ from pydantic import BaseModel, EmailStr, Field
 class UserCreate(BaseModel):
     nombre: str = Field(..., min_length=2, max_length=100)
     correo: EmailStr
-    clave: str = Field(..., min_length=6)
+    clave: str = Field(..., min_length=8, max_length=128)
     fecha_nacimiento: date
 
 
 class UserLogin(BaseModel):
     correo: EmailStr
-    clave: str = Field(..., min_length=1)
+    clave: str = Field(..., min_length=1, max_length=128)
 
 
 class UserPublicRead(BaseModel):
