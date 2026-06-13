@@ -152,7 +152,10 @@ function RegisterPage() {
                     key={p.label}
                     className={`formulario__password-rule ${p.test(form.clave) ? "formulario__password-rule--ok" : ""}`}
                   >
-                    {p.test(form.clave) ? "✓" : "○"} {p.label}
+                    {p.test(form.clave)
+                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>}
+                    {' '}{p.label}
                   </li>
                 ))}
               </ul>

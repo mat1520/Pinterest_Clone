@@ -4,6 +4,38 @@ import { useAuth } from "../store/authStore";
 import pinService from "../services/pinService";
 import Header from "../components/Header";
 
+function HeartFilled({ count }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
+
+function HeartOutline() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
+
+function BookmarkFilled() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function BookmarkOutline() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
 function PinDetailPage() {
   const { id } = useParams();
   const { authenticated, user } = useAuth();
@@ -16,6 +48,7 @@ function PinDetailPage() {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,12 +186,13 @@ function PinDetailPage() {
           <article className="publicacion">
             <figure className="publicacion__figura">
               <img
-                className="publicacion__imagen"
+                className={`publicacion__imagen${imgLoaded ? " publicacion__imagen--loaded" : ""}`}
                 src={pin.url_imagen}
                 alt={pin.titulo}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
+                onLoad={() => setImgLoaded(true)}
               />
             </figure>
             <div className="publicacion__acciones">
@@ -167,14 +201,14 @@ function PinDetailPage() {
                 onClick={handleLike}
                 aria-label={liked ? "Quitar like" : "Dar like"}
               >
-                {liked ? "♥" : "♡"} {likesCount > 0 && likesCount}
+                {liked ? <HeartFilled count={likesCount} /> : <HeartOutline />}{likesCount > 0 && <span style={{ marginLeft: 4 }}>{likesCount}</span>}
               </button>
               <button
                 className={`publicacion__accion ${saved ? "publicacion__accion--activo" : ""}`}
                 onClick={handleSave}
                 aria-label={saved ? "Quitar guardado" : "Guardar"}
               >
-                {saved ? "★" : "☆"} Guardar
+                {saved ? <BookmarkFilled /> : <BookmarkOutline />} Guardar
               </button>
               <button className="publicacion__accion" onClick={handleShare} aria-label="Compartir">
                 ↗ Compartir
@@ -216,7 +250,7 @@ function PinDetailPage() {
                           onClick={() => handleDeleteComment(c.id)}
                           aria-label="Eliminar comentario"
                         >
-                          ✕
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                       )}
                     </div>

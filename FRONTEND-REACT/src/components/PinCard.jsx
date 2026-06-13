@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../store/authStore";
 import pinService from "../services/pinService";
@@ -47,6 +47,8 @@ function ShareIcon() {
 function PinCard({ pin, priority = false, initialSaved = false }) {
   const navigate = useNavigate();
   const { authenticated } = useAuth();
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const imgRef = useRef(null);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(pin.likes_count || 0);
   const [saved, setSaved] = useState(initialSaved);
@@ -106,12 +108,14 @@ function PinCard({ pin, priority = false, initialSaved = false }) {
     >
       <div className="pin__media">
         <img
-          className="pin__imagen"
+          ref={imgRef}
+          className={`pin__imagen${imgLoaded ? " pin__imagen--loaded" : ""}`}
           src={pin.url_imagen}
           alt={pin.titulo}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
           fetchPriority={priority ? "high" : "low"}
+          onLoad={() => setImgLoaded(true)}
         />
         <div className="pin__overlay">
           <div className="pin__overlay-acciones">

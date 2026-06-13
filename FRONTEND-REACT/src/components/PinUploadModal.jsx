@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { CATEGORIES } from "../constants";
 import pinService from "../services/pinService";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
@@ -127,7 +128,7 @@ function PinUploadModal({ onClose, onCreated }) {
               onChange={(e) => setCategoria(e.target.value)}
             >
               <option value="">Selecciona una categoría (opcional)</option>
-              {["Moda", "Comida", "Viajes", "Decoracion", "Arte"].map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
                 </option>

@@ -1,4 +1,4 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, Query, Request, UploadFile, status
 
