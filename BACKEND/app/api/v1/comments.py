@@ -1,6 +1,6 @@
-from typing import List
+from typing import Annotated, List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 
 from app.application.services import CommentService
 from app.core.dependencies import get_comment_repository, get_current_user, get_pin_repository
@@ -20,7 +20,7 @@ def get_comment_service(
 
 @router.post("", response_model=CommentRead, status_code=201)
 def create_comment(
-    pin_id: int,
+    pin_id: Annotated[int, Path(gt=0)],
     data: CommentCreate,
     current_user: User = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
@@ -40,7 +40,7 @@ def create_comment(
 
 @router.get("", response_model=List[CommentRead])
 def list_comments(
-    pin_id: int,
+    pin_id: Annotated[int, Path(gt=0)],
     service: CommentService = Depends(get_comment_service),
 ) -> List[CommentRead]:
     comments = service.get_by_pin_id(pin_id)

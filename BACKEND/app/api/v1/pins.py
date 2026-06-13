@@ -1,6 +1,6 @@
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile, status, Query
 
 from app.application.interfaces import IStorageService
 from app.application.services import PinService
@@ -92,7 +92,7 @@ def list_pins(
 
 @router.get("/{pin_id}", response_model=PinRead)
 def get_pin(
-    pin_id: Annotated[int, Query(gt=0)],
+    pin_id: Annotated[int, Path(gt=0)],
     service: PinService = Depends(get_pin_service),
 ) -> PinRead:
     pin = service.get_by_id(pin_id)
@@ -123,7 +123,7 @@ def create_pin(
 
 @router.delete("/{pin_id}", status_code=204)
 def delete_pin(
-    pin_id: int,
+    pin_id: Annotated[int, Path(gt=0)],
     current_user: User = Depends(get_current_user),
     service: PinService = Depends(get_pin_service),
 ) -> None:
