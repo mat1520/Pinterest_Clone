@@ -29,10 +29,12 @@ class Settings(BaseSettings):
         v = self.ALLOWED_ORIGINS.strip()
         if v.startswith("["):
             try:
-                return json.loads(v)
+                origins = json.loads(v)
             except json.JSONDecodeError:
-                pass
-        return [o.strip() for o in v.split(",") if o.strip()]
+                origins = [v]
+        else:
+            origins = [o.strip() for o in v.split(",") if o.strip()]
+        return [o.rstrip("/") for o in origins]
 
     class Config:
         env_file = ".env"
