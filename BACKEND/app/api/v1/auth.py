@@ -9,6 +9,14 @@ from app.schemas.user import UserCreate, UserLogin, UserPublicRead
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+COOKIE_KWARGS = dict(
+    key="access_token",
+    httponly=True,
+    secure=True,
+    samesite="none",
+    path="/",
+)
+
 
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repository),
@@ -43,18 +51,14 @@ def login(
 ) -> dict:
     _user, token_obj = service.login(data)
     response.set_cookie(
-        key="access_token",
         value=token_obj.access_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/",
+        **COOKIE_KWARGS,
     )
     return {"message": "Login exitoso"}
 
 
 @router.post("/logout", status_code=200)
 def logout(response: Response, _: object = Depends(get_current_user)) -> dict:
-    response.delete_cookie(key="access_token", path="/", httponly=True, samesite="lax")
+    response.delete_cookie(**COOKIE_KWARGS)
     return {"message": "Sesión cerrada"}
