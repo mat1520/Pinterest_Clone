@@ -112,6 +112,25 @@ def list_pins(
     return PinListResponse(items=items, total=total, offset=offset, limit=limit)
 
 
+@router.get("/saved")
+def get_saved_pins(
+    current_user: User = Depends(get_current_user),
+    save_service: SaveService = Depends(get_save_service),
+    pin_service: PinService = Depends(get_pin_service),
+) -> PinListResponse:
+    saved_ids = save_service.get_saved_pin_ids(current_user.id)
+    pins = []
+    for pid in saved_ids:
+        pin = pin_service.get_by_id(pid)
+        if pin:
+            pins.append(_to_read(
+                pin, pin_service, pin.autor.nombre if pin.autor else "",
+                likes_count=pin_service.get_likes_count(pin.id),
+                saves_count=pin_service.get_saves_count(pin.id),
+            ))
+    return PinListResponse(items=pins, total=len(pins), offset=0, limit=len(pins))
+
+
 @router.get("/{pin_id}", response_model=PinRead)
 def get_pin(
     pin_id: Annotated[int, Path(gt=0)],
@@ -189,22 +208,3 @@ def toggle_save(
 ) -> dict:
     saved = service.toggle(current_user.id, pin_id)
     return {"saved": saved}
-
-
-@router.get("/saved")
-def get_saved_pins(
-    current_user: User = Depends(get_current_user),
-    save_service: SaveService = Depends(get_save_service),
-    pin_service: PinService = Depends(get_pin_service),
-) -> PinListResponse:
-    saved_ids = save_service.get_saved_pin_ids(current_user.id)
-    pins = []
-    for pid in saved_ids:
-        pin = pin_service.get_by_id(pid)
-        if pin:
-            pins.append(_to_read(
-                pin, pin_service, pin.autor.nombre if pin.autor else "",
-                likes_count=pin_service.get_likes_count(pin.id),
-                saves_count=pin_service.get_saves_count(pin.id),
-            ))
-    return PinListResponse(items=pins, total=len(pins), offset=0, limit=len(pins))
