@@ -94,6 +94,16 @@ button {
   color: var(--color-accent);
 }
 
+.cabecera__usuario {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .cabecera__busqueda {
   flex: 1;
 }

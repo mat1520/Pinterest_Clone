@@ -12,6 +12,11 @@ const pinService = {
     return data;
   },
 
+  async getCategories() {
+    const { data } = await api.get("/pins/categories");
+    return data;
+  },
+
   async delete(pinId) {
     await api.delete(`/pins/${pinId}`);
   },

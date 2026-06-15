@@ -1,11 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CATEGORIES } from "../constants";
 import Header from "../components/Header";
 import PinGrid from "../components/PinGrid";
+import pinService from "../services/pinService";
 
 function HomePage() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [categories, setCategories] = useState(CATEGORIES);
+
+  useEffect(() => {
+    pinService
+      .getCategories()
+      .then((cats) => {
+        if (cats.length > 0) setCategories(cats);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <>
@@ -13,7 +24,7 @@ function HomePage() {
       <main>
         <section className="categorias">
           <nav className="categorias__lista" aria-label="Categorias">
-            {CATEGORIES.map(
+            {categories.map(
               (categoria) => (
                 <Link key={categoria} className="categorias__enlace" to={`/?q=${categoria}`}>
                   {categoria}

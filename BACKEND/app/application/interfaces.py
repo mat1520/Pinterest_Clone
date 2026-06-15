@@ -26,6 +26,9 @@ class IPinRepository(ABC):
     def get_all(self, q: Optional[str] = None, autor_id: Optional[int] = None, offset: int = 0, limit: int = 20) -> tuple[List[Pin], int]: ...
 
     @abstractmethod
+    def get_categories(self) -> List[str]: ...
+
+    @abstractmethod
     def delete(self, pin: Pin) -> None: ...
 
     @abstractmethod

@@ -112,6 +112,13 @@ def list_pins(
     return PinListResponse(items=items, total=total, offset=offset, limit=limit)
 
 
+@router.get("/categories")
+def list_categories(
+    service: PinService = Depends(get_pin_service),
+) -> list[str]:
+    return service.get_categories()
+
+
 @router.get("/saved", response_model=PinListResponse)
 def get_saved_pins(
     current_user: User = Depends(get_current_user),

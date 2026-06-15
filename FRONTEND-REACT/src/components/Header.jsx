@@ -4,7 +4,7 @@ import { useAuth } from "../store/authStore";
 import PinUploadModal from "./PinUploadModal";
 
 function Header({ onPinCreated }) {
-  const { authenticated, logout } = useAuth();
+  const { authenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [query, setQuery] = useState("");
@@ -53,6 +53,11 @@ function Header({ onPinCreated }) {
 
           {authenticated ? (
             <>
+              {user && (
+                <span className="cabecera__usuario">
+                  {user.nombre}
+                </span>
+              )}
               <Link
                 to="/profile"
                 className="boton boton--gris boton--sm"

@@ -81,6 +81,9 @@ class PinService:
     def get_all(self, q: str = None, autor_id: int = None, offset: int = 0, limit: int = 20) -> tuple[List[Pin], int]:
         return self._pin_repo.get_all(q=q, autor_id=autor_id, offset=offset, limit=limit)
 
+    def get_categories(self) -> List[str]:
+        return self._pin_repo.get_categories()
+
     def resolve_url(self, object_key: str) -> str:
         return self._storage.get_presigned_url(object_key)
 

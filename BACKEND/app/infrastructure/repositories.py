@@ -41,6 +41,7 @@ class PinRepository(IPinRepository):
     def get_all(self, q: Optional[str] = None, autor_id: Optional[int] = None, offset: int = 0, limit: int = 20) -> tuple[List[Pin], int]:
         statement = select(Pin)
         count_statement = select(sa.func.count(Pin.id))
+        has_filter = False
         if q:
             from sqlmodel import or_
             like_filter = or_(
@@ -50,12 +51,24 @@ class PinRepository(IPinRepository):
             )
             statement = statement.where(like_filter)
             count_statement = count_statement.where(like_filter)
+            has_filter = True
         if autor_id:
             statement = statement.where(Pin.autor_id == autor_id)
             count_statement = count_statement.where(Pin.autor_id == autor_id)
+            has_filter = True
         total = self._session.exec(count_statement).one()
-        statement = statement.order_by(Pin.id.desc()).offset(offset).limit(limit)
+        if has_filter:
+            statement = statement.order_by(Pin.id.desc())
+        else:
+            statement = statement.order_by(sa.func.random())
+        statement = statement.offset(offset).limit(limit)
         return list(self._session.exec(statement).all()), total
+
+    def get_categories(self) -> List[str]:
+        statement = select(Pin.categoria).where(
+            Pin.categoria.isnot(None), Pin.categoria != ""
+        ).distinct().order_by(Pin.categoria)
+        return list(self._session.exec(statement).all())
 
     def delete(self, pin: Pin) -> None:
         self._session.delete(pin)
