@@ -179,7 +179,7 @@ function RegisterPage() {
           <p className="formulario__texto formulario__texto--small">
             Al registrarte, aceptas nuestros{" "}
             <Link className="formulario__enlace" to="/terms">
-              Terminos y Condiciones
+              Términos y Condiciones
             </Link>
             .
           </p>

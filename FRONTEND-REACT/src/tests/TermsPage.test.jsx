@@ -15,7 +15,7 @@ function renderPage() {
 describe("TermsPage", () => {
   it("renders the main heading", () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: /terminos y condiciones/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /t[eé]rminos y condiciones/i })).toBeInTheDocument();
   });
 
   it("renders section: Reglas de Uso", () => {
@@ -25,7 +25,7 @@ describe("TermsPage", () => {
 
   it("renders section: Politicas de Contenido", () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: /politicas de contenido/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /pol[ií]ticas de contenido/i })).toBeInTheDocument();
   });
 
   it("renders section: Responsabilidades del Usuario", () => {
@@ -53,6 +53,11 @@ describe("TermsPage", () => {
     const link = screen.getByRole("link", { name: /registro/i });
     expect(link).toHaveAttribute("href", "/register");
   });
+
+  it("renders the footer acceptance text", () => {
+    renderPage();
+    expect(screen.getByText(/al hacer clic en.*continuar.*aceptas/i)).toBeInTheDocument();
+  });
 });
 
 describe("TermsPage — routing", () => {
@@ -68,6 +73,6 @@ describe("TermsPage — routing", () => {
         </Routes>
       </MemoryRouter>
     );
-    expect(await screen.findByRole("heading", { name: /terminos y condiciones/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /t[eé]rminos y condiciones/i })).toBeInTheDocument();
   });
 });

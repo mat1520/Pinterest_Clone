@@ -956,4 +956,16 @@ button {
     width: 30px;
     height: 30px;
   }
+
+  .terminos {
+    padding: 24px 16px;
+  }
+
+  .terminos__titulo {
+    font-size: 22px;
+  }
+
+  .terminos__subtitulo {
+    font-size: 17px;
+  }
 }
