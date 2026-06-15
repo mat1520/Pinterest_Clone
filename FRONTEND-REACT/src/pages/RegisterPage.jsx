@@ -176,6 +176,13 @@ function RegisterPage() {
             />
           </label>
           {error && <p className="formulario__error">{error}</p>}
+          <p className="formulario__texto formulario__texto--small">
+            Al registrarte, aceptas nuestros{" "}
+            <Link className="formulario__enlace" to="/terms">
+              Terminos y Condiciones
+            </Link>
+            .
+          </p>
           <button
             id="btn-submit-register"
             className="boton"
