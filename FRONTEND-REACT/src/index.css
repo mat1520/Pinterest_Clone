@@ -657,6 +657,84 @@ button {
   }
 }
 
+/* Terms & Conditions */
+.terminos {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 40px 24px;
+  background: var(--color-surface);
+}
+
+.terminos__contenedor {
+  width: 100%;
+  max-width: 720px;
+  animation: entrada 0.35s ease both;
+}
+
+.terminos__volver {
+  display: inline-block;
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 20px;
+  transition: opacity var(--transition-base);
+}
+
+.terminos__volver:hover {
+  opacity: 0.8;
+}
+
+.terminos__titulo {
+  font-size: 28px;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.terminos__intro {
+  color: var(--color-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.terminos__seccion {
+  margin-bottom: 32px;
+}
+
+.terminos__subtitulo {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.terminos__articulo {
+  margin-bottom: 20px;
+}
+
+.terminos__encabezado {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.terminos__articulo p {
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.terminos__pie {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
 /* Badges y Descripción de Pines */
 .pin__categoria-badge {
   display: inline-block;
