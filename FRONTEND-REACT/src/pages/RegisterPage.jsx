@@ -29,6 +29,20 @@ function getMinDate() {
   return d.toISOString().split("T")[0];
 }
 
+function validateAge(fecha) {
+  if (!fecha) return "La fecha de nacimiento es obligatoria.";
+  const birth = new Date(fecha);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const mDiff = today.getMonth() - birth.getMonth();
+  if (mDiff < 0 || (mDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  if (age < 18) return "Debes tener al menos 18 a\u00f1os para registrarte.";
+  if (age > 100) return "La fecha de nacimiento no es v\u00e1lida.";
+  return null;
+}
+
 function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -39,6 +53,8 @@ function RegisterPage() {
     fecha_nacimiento: "",
   });
   const [error, setError] = useState(null);
+  const [birthdateError, setBirthdateError] = useState(null);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const strength = useMemo(() => getPasswordStrength(form.clave), [form.clave]);
@@ -56,11 +72,21 @@ function RegisterPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError(null);
+    setBirthdateError(null);
     if (!allValid) {
       setError("La contrasena no cumple con todos los requisitos de seguridad.");
       return;
     }
-    setError(null);
+    const ageErr = validateAge(form.fecha_nacimiento);
+    if (ageErr) {
+      setBirthdateError(ageErr);
+      return;
+    }
+    if (!aceptaTerminos) {
+      setError("Debes aceptar los T\u00e9rminos y Condiciones para registrarte.");
+      return;
+    }
     setLoading(true);
     try {
       await register(
@@ -169,25 +195,42 @@ function RegisterPage() {
               type="date"
               name="fecha_nacimiento"
               value={form.fecha_nacimiento}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                setBirthdateError(validateAge(e.target.value));
+              }}
               min={minDate}
               max={maxDate}
               required
             />
+            {birthdateError && (
+              <p className="formulario__error formulario__error--campo">
+                {birthdateError}
+              </p>
+            )}
           </label>
           {error && <p className="formulario__error">{error}</p>}
-          <p className="formulario__texto formulario__texto--small">
-            Al registrarte, aceptas nuestros{" "}
-            <Link className="formulario__enlace" to="/terms">
-              Términos y Condiciones
-            </Link>
-            .
-          </p>
+          <label className="formulario__checkbox-label">
+            <input
+              id="input-terminos"
+              className="formulario__checkbox-input"
+              type="checkbox"
+              checked={aceptaTerminos}
+              onChange={(e) => setAceptaTerminos(e.target.checked)}
+            />
+            <span className="formulario__checkbox-custom" />
+            <span className="formulario__checkbox-texto">
+              Acepto los{" "}
+              <Link className="formulario__enlace" to="/terms">
+                Términos y Condiciones
+              </Link>
+            </span>
+          </label>
           <button
             id="btn-submit-register"
             className="boton"
             type="submit"
-            disabled={loading}
+            disabled={loading || !aceptaTerminos}
           >
             {loading ? "Registrando..." : "Continuar"}
           </button>
