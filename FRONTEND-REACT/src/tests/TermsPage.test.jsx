@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { Suspense } from "react";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import TermsPage from "../pages/TermsPage";
 
 function renderPage() {
@@ -51,5 +52,22 @@ describe("TermsPage", () => {
     renderPage();
     const link = screen.getByRole("link", { name: /registro/i });
     expect(link).toHaveAttribute("href", "/register");
+  });
+});
+
+describe("TermsPage — routing", () => {
+  it("renders at /terms route", async () => {
+    render(
+      <MemoryRouter initialEntries={["/terms"]}>
+        <Routes>
+          <Route path="/terms" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <TermsPage />
+            </Suspense>
+          } />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole("heading", { name: /terminos y condiciones/i })).toBeInTheDocument();
   });
 });

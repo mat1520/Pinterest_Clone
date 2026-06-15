@@ -7,6 +7,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const PinDetailPage = lazy(() => import("./pages/PinDetailPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
 
 function PageSkeleton() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/pin/:id" element={<PinDetailPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/terms" element={<TermsPage />} />
           </Routes>
         </Suspense>
       </AuthProvider>
